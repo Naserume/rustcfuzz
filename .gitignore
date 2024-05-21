@@ -2,4 +2,7 @@
 /self_out
 /splice
 /deletion
+/splice_rand
 testfile.tar
+self_out.tar
+splice.tar

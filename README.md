@@ -16,6 +16,9 @@ Options:
 for splicing 30 mutations for each seed <br/> 
 `cargo run -- --input-dir example_data --output-dir ./out --mode 2 --file-count 30`
 
+for splicing to different type with 10 mutations for each seed  <br/> 
+`cargo run -- --input-dir example_data --output-dir ./out --mode 3 --file-count 10`
+
 in case you want to splice code from itself <br/> 
 `cargo run -- -i tests -o ./out -m 1 -f 20`
 

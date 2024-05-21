@@ -46,7 +46,7 @@ fn visit_horizontal(source_code: &str, cursor: &mut TreeCursor, acc: &mut Vec<Ty
 }
 // 모든 탐색이 끝나면, acc엔 해당 source code에서 찾아 정보를 기록한 모든 type들이 Vec<TypePosInfo>에 저장될 것이다.
 // 여기서 타입에 맞춰 변이를 하면 된다.
-// 이건 굳이 안쓰기로.
+// 이건 굳이 쓰진 않기로.
 /*
 pub fn find_type(source_code: &str, cursor: &mut TreeCursor, acc: &mut Vec<TypePosInfo>) {
     let node = cursor.node();
@@ -433,6 +433,89 @@ pub fn mutate_splice(
     modified_versions
 }
 
+pub fn mutate_splice_randtype( // 이건 type이 다른 것도 넣어준다. 
+    source_code: &str,
+    new_exprssions: &HashMap<&str, Vec<String>>,
+    structs: &Vec<TypePosInfo>,
+    mutation_count: i32,
+) -> Vec<String> {
+    let mut modified_versions = Vec::new();
+    let mut index = 0;
+
+    if mutation_count == 0 {
+        panic!("Stopped because there might be too much mutated files.");
+    }
+    // mutation_count가 0이 아니면, mutation_count만큼만 변이를 만든다.
+    // 당연히 여기도 structs 안에서 랜덤한 선택이 필요.
+    else {
+        let keylist: Vec<&str> = new_exprssions.keys().map(|&x| x).collect();
+
+        let sample: Vec<TypePosInfo> = structs
+            .choose_multiple(&mut rand::thread_rng(), structs.len())
+            .map(|&x| x)
+            .collect();
+        // 여긴 방법이 조금 다르다. 일단 뒤섞고, mutation_count만큼만 선택한다.
+        // 방법은... 대충 하자 대충 그냥 랜덤선택
+        let mut check_zero_mutation: i32 = 0;
+        // mutation 자체가 발생하지 않는 경우, index가 증가하지 않는다.
+        // zero_mutation이 100을 넘어가는동안 index가 증가하지 않으면, mutation이 발생하지 않는 것으로 간주한다.
+        println!("start while");
+        while index < mutation_count {
+            check_zero_mutation += 1;
+            if check_zero_mutation > 100 && index == 0 {
+                break;
+            }
+            if let Some(selected) = sample.choose(&mut rand::thread_rng()) {
+                // let selected = sample.choose(&mut rand::thread_rng()).unwrap();
+                // let &(type_string, start_byte, end_byte, start_point, end_point) = selected;
+
+                let &(type_string, start_byte, end_byte, start_point, end_point) = selected;
+                // start_byte와 end_byte를 이용해 원본 코드를 자른다.
+                // before는 바꾸고자 하는 코드 앞, after는 뒤, original은 바뀌는 부분의 원본 코드
+                let before = &source_code[..start_byte];
+                let after = &source_code[end_byte..];
+                let original = &source_code[start_byte..end_byte];
+
+                // 원래는 type_string에 해당하는 타입을 찾아서, 그 타입에 해당하는 변형된 버전을 찾아서 modified_versions에 넣어준다.
+                // 하지만 이건 random한 type을 사용해야 하니, type_string을 랜덤으로 선택한다.
+                let rand_type_string = keylist.choose(&mut rand::thread_rng()).unwrap();
+                if let Some(exprs) = new_exprssions.get(rand_type_string) {
+                    // 여기도 마찬가지로, exprs 중 하나를 랜덤으로 선택해서 변이를 만든다.
+                    if let Some(n) = exprs.choose(&mut rand::thread_rng()) {
+                        // n.to_string() != 이 부분은 중복 방지를 위해 넣은 것. original code와 다른 것만 출력한다.
+                        if n.to_string() != original && n.to_string() != "" {
+                            modified_versions.push(format!("{}{}{}", before, n, after));
+                            index += 1;
+                            // print difference between original and modified version
+                            println!(
+                                "[{}] {}-{} {}:{} -> {}:{}",
+                                index, start_point, end_point, original, type_string, n, rand_type_string
+                            );
+                        }
+                    }
+                    /*
+                    let n = exprs.choose(&mut rand::thread_rng()).unwrap();
+                    // n.to_string() != 이 부분은 중복 방지를 위해 넣은 것. original code와 다른 것만 출력한다.
+                    if n.to_string() != original && n.to_string() != "" {
+                        modified_versions.push(format!("{}{}{}", before, n, after));
+                        index += 1;
+                        // print difference between original and modified version
+                        println!(
+                            "[{}] {}-{} {} : {} -> {}",
+                            index, start_point, end_point, type_string, original, n
+                        );
+                    }
+                    */
+                }
+            }
+        }
+        println!("end while");
+    }
+
+    //변형된 버전을 돌려줌.
+    modified_versions
+}
+
 // 이 함수를 통해 source code를 받아서 struct을 수정한 source code를 반환한다.
 // 코드를 주면, parser로 parse 한 다음, found_structs에 struct 정보를 넣어준다.
 // 그 다음 찾은 struct 정보를 모아 modify_types를 통해 수정한 후 반환한다.
@@ -504,7 +587,7 @@ struct Cli {
     /// locate output directory path
     #[arg(short, long)]
     output_dir: Option<String>,
-    /// 0: deletion only, 1: self splice mutation, 2: all file splice mutation
+    /// 0: deletion only, 1: self splice mutation, 2: all file splice mutation, 3: all file splice mutation with random type
     #[arg(short, long)]
     mode: i32,
     /// count of mutation for each seed file.
@@ -541,7 +624,7 @@ pub fn main() {
         // 이걸 하려면 1. input_dir 내 모든 entry에 대해 mutate_self에 있던 new_exprs.insert를 실행해
         // 아주아주 거대한 new_exprs를 만든 다음
         // 2. mutate_self와 유사한 방법으로 각 파일을 mutate.
-        if mutation_mode == 2 {
+        if mutation_mode == 2 || mutation_mode == 3 {
             if mutation_count == 0 {
                 panic!("Stopped because there might be too much mutated files.");
             }
@@ -614,13 +697,21 @@ pub fn main() {
                         let source_code = fs::read_to_string(path).unwrap();
                         if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
                             struct_per_file.append(&mut get_splice_parts(&source_code));
-                            println!("testing1");
-                            mutated.append(&mut mutate_splice(
-                                &source_code,
-                                &new_expressions,
-                                &struct_per_file,
-                                mutation_count,
-                            ));
+                            if mutation_mode == 3 {
+                                mutated.append(&mut mutate_splice_randtype(
+                                    &source_code,
+                                    &new_expressions,
+                                    &struct_per_file,
+                                    mutation_count,
+                                ));
+                            } else { /* mutation_mode == 2 */
+                                mutated.append(&mut mutate_splice(
+                                    &source_code,
+                                    &new_expressions,
+                                    &struct_per_file,
+                                    mutation_count,
+                                ));
+                            }
                         }
                     }
                 }
