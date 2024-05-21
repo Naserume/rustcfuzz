@@ -17,7 +17,7 @@ for splicing 30 mutations for each seed <br/>
 `cargo run -- --input-dir example_data --output-dir ./out --mode 2 --file-count 30`
 
 in case you want to splice code from itself <br/> 
-`cargo run -- -i example_data -o ./out -m 1 -f 20`
+`cargo run -- -i tests -o ./out -m 1 -f 20`
 
 if you want to create all deletions from your seeds <br/> 
 `cargo run -- -i example_data -o ./out -m 0 -f 0`

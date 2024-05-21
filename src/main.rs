@@ -314,35 +314,40 @@ pub fn mutate_self(
         let mut check_zero_mutation: i32 = 0;
         // mutation 자체가 발생하지 않는 경우, index가 증가하지 않는다.
         // zero_mutation이 100을 넘어가는동안 index가 증가하지 않으면, mutation이 발생하지 않는 것으로 간주한다.
+        println!("start while");
         while index < mutation_count {
             check_zero_mutation += 1;
             if check_zero_mutation > 100 && index == 0 {
                 break;
             }
-            let selected = sample.choose(&mut rand::thread_rng()).unwrap();
-            let &(type_string, start_byte, end_byte, start_point, end_point) = selected;
-            // start_byte와 end_byte를 이용해 원본 코드를 자른다.
-            // before는 바꾸고자 하는 코드 앞, after는 뒤, original은 바뀌는 부분의 원본 코드
-            let before = &source_code[..start_byte];
-            let after = &source_code[end_byte..];
-            let original = &source_code[start_byte..end_byte];
+            if let Some(selected) = sample.choose(&mut rand::thread_rng()) {
+                // let selected = sample.choose(&mut rand::thread_rng()).unwrap();
+                let &(type_string, start_byte, end_byte, start_point, end_point) = selected;
+                // start_byte와 end_byte를 이용해 원본 코드를 자른다.
+                // before는 바꾸고자 하는 코드 앞, after는 뒤, original은 바뀌는 부분의 원본 코드
+                let before = &source_code[..start_byte];
+                let after = &source_code[end_byte..];
+                let original = &source_code[start_byte..end_byte];
 
-            // type_string에 해당하는 타입을 찾아서, 그 타입에 해당하는 변형된 버전을 찾아서 modified_versions에 넣어준다.
-            if let Some(exprs) = new_exprs.get(type_string) {
-                // 여기도 마찬가지로, exprs 중 하나를 랜덤으로 선택해서 변이를 만든다.
-                let n = exprs.choose(&mut rand::thread_rng()).unwrap();
-                // n.to_string() != 이 부분은 중복 방지를 위해 넣은 것. original code와 다른 것만 출력한다.
-                if n.to_string() != original && n.to_string() != "" {
-                    modified_versions.push(format!("{}{}{}", before, n, after));
-                    index += 1;
-                    // print difference between original and modified version
-                    println!(
-                        "[{}] {}-{} {} : {} -> {}",
-                        index, start_point, end_point, type_string, original, n
-                    );
+                // type_string에 해당하는 타입을 찾아서, 그 타입에 해당하는 변형된 버전을 찾아서 modified_versions에 넣어준다.
+                if let Some(exprs) = new_exprs.get(type_string) {
+                    // 여기도 마찬가지로, exprs 중 하나를 랜덤으로 선택해서 변이를 만든다.
+                    let n = exprs.choose(&mut rand::thread_rng()).unwrap();
+                    // n.to_string() != 이 부분은 중복 방지를 위해 넣은 것. original code와 다른 것만 출력한다.
+                    if n.to_string() != original && n.to_string() != "" {
+                        modified_versions.push(format!("{}{}{}", before, n, after));
+                        index += 1;
+                        // print difference between original and modified version
+                        println!(
+                            "[{}] {}-{} {} : {} -> {}",
+                            index, start_point, end_point, type_string, original, n
+                        );
+                    }
                 }
             }
+            
         }
+        println!("end while");
     }
 
     //변형된 버전을 돌려줌.
@@ -373,35 +378,55 @@ pub fn mutate_splice(
         let mut check_zero_mutation: i32 = 0;
         // mutation 자체가 발생하지 않는 경우, index가 증가하지 않는다.
         // zero_mutation이 100을 넘어가는동안 index가 증가하지 않으면, mutation이 발생하지 않는 것으로 간주한다.
+        println!("start while");
         while index < mutation_count {
             check_zero_mutation += 1;
             if check_zero_mutation > 100 && index == 0 {
                 break;
             }
-            let selected = sample.choose(&mut rand::thread_rng()).unwrap();
-            let &(type_string, start_byte, end_byte, start_point, end_point) = selected;
-            // start_byte와 end_byte를 이용해 원본 코드를 자른다.
-            // before는 바꾸고자 하는 코드 앞, after는 뒤, original은 바뀌는 부분의 원본 코드
-            let before = &source_code[..start_byte];
-            let after = &source_code[end_byte..];
-            let original = &source_code[start_byte..end_byte];
+            if let Some(selected) = sample.choose(&mut rand::thread_rng()) {
+                // let selected = sample.choose(&mut rand::thread_rng()).unwrap();
+                // let &(type_string, start_byte, end_byte, start_point, end_point) = selected;
 
-            // type_string에 해당하는 타입을 찾아서, 그 타입에 해당하는 변형된 버전을 찾아서 modified_versions에 넣어준다.
-            if let Some(exprs) = new_exprssions.get(type_string) {
-                // 여기도 마찬가지로, exprs 중 하나를 랜덤으로 선택해서 변이를 만든다.
-                let n = exprs.choose(&mut rand::thread_rng()).unwrap();
-                // n.to_string() != 이 부분은 중복 방지를 위해 넣은 것. original code와 다른 것만 출력한다.
-                if n.to_string() != original && n.to_string() != "" {
-                    modified_versions.push(format!("{}{}{}", before, n, after));
-                    index += 1;
-                    // print difference between original and modified version
-                    println!(
-                        "[{}] {}-{} {} : {} -> {}",
-                        index, start_point, end_point, type_string, original, n
-                    );
+                let &(type_string, start_byte, end_byte, start_point, end_point) = selected;
+                // start_byte와 end_byte를 이용해 원본 코드를 자른다.
+                // before는 바꾸고자 하는 코드 앞, after는 뒤, original은 바뀌는 부분의 원본 코드
+                let before = &source_code[..start_byte];
+                let after = &source_code[end_byte..];
+                let original = &source_code[start_byte..end_byte];
+
+                // type_string에 해당하는 타입을 찾아서, 그 타입에 해당하는 변형된 버전을 찾아서 modified_versions에 넣어준다.
+                if let Some(exprs) = new_exprssions.get(type_string) {
+                    // 여기도 마찬가지로, exprs 중 하나를 랜덤으로 선택해서 변이를 만든다.
+                    if let Some(n) = exprs.choose(&mut rand::thread_rng()) {
+                        // n.to_string() != 이 부분은 중복 방지를 위해 넣은 것. original code와 다른 것만 출력한다.
+                        if n.to_string() != original && n.to_string() != "" {
+                            modified_versions.push(format!("{}{}{}", before, n, after));
+                            index += 1;
+                            // print difference between original and modified version
+                            println!(
+                                "[{}] {}-{} {} : {} -> {}",
+                                index, start_point, end_point, type_string, original, n
+                            );
+                        }
+                    }
+                    /*
+                    let n = exprs.choose(&mut rand::thread_rng()).unwrap();
+                    // n.to_string() != 이 부분은 중복 방지를 위해 넣은 것. original code와 다른 것만 출력한다.
+                    if n.to_string() != original && n.to_string() != "" {
+                        modified_versions.push(format!("{}{}{}", before, n, after));
+                        index += 1;
+                        // print difference between original and modified version
+                        println!(
+                            "[{}] {}-{} {} : {} -> {}",
+                            index, start_point, end_point, type_string, original, n
+                        );
+                    }
+                    */
                 }
             }
         }
+        println!("end while");
     }
 
     //변형된 버전을 돌려줌.
@@ -532,9 +557,11 @@ pub fn main() {
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
                         let source_code = fs::read_to_string(path).unwrap();
-                        // 이거 &source_code 도대체 왜 에러가...
-                        // splice_mutates.append(&mut get_splice_parts(&source_code));
-                        splice_mutates.append(&mut get_splice_parts(&source_code));
+                        if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
+                            // 이거 &source_code 도대체 왜 에러가...
+                            // splice_mutates.append(&mut get_splice_parts(&source_code));
+                            splice_mutates.append(&mut get_splice_parts(&source_code));
+                        }
                     }
                 }
 
@@ -548,20 +575,22 @@ pub fn main() {
                     // 방법은 2가지다. source code를 TypePosInfo안에 넣어주거나, 아예 이 sample 자체를 외부에서 만들어서 전달하거나.
                     // 당연히 후자를 해야지..?
                     let source_code = fs::read_to_string(path).unwrap();
-                    // 왜안되는건데 왜
-                    // 넘겨주는 모든 것을 &str이 아닌 String으로 바꿔버렸다.
-                    // HashMap<&str, Vec<String>> 이렇게 바꿨다.
-                    let sample = &source_code[start_byte..end_byte];
-                    if let Some(exprs) = new_expressions.get_mut(type_string) {
-                        if exprs.contains(&sample.to_string()) {
-                            // 이미 있으면 추가하지 않는다. duplicate 방지
-                            continue;
+                        if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
+                        // 왜안되는건데 왜
+                        // 넘겨주는 모든 것을 &str이 아닌 String으로 바꿔버렸다.
+                        // HashMap<&str, Vec<String>> 이렇게 바꿨다.
+                        let sample = &source_code[start_byte..end_byte];
+                        if let Some(exprs) = new_expressions.get_mut(type_string) {
+                            if exprs.contains(&sample.to_string()) {
+                                // 이미 있으면 추가하지 않는다. duplicate 방지
+                                continue;
+                            } else {
+                                exprs.push(sample.to_string());
+                            }
                         } else {
-                            exprs.push(sample.to_string());
+                            new_expressions
+                                .insert(type_string, vec!["".to_string(), sample.to_string()]);
                         }
-                    } else {
-                        new_expressions
-                            .insert(type_string, vec!["".to_string(), sample.to_string()]);
                     }
                 }
             }
@@ -577,18 +606,25 @@ pub fn main() {
                 let path = entry.path();
                 // file name을 저장한다.
                 if let Some(ext) = path.extension() {
+                    let name = path.file_name().unwrap().to_string_lossy().into_owned();
+                    println!("filename : {}", name);
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
+                        // if source_code is larger then 500 lines, ignore it.
                         let source_code = fs::read_to_string(path).unwrap();
-                        struct_per_file.append(&mut get_splice_parts(&source_code));
-                        mutated.append(&mut mutate_splice(
-                            &source_code,
-                            &new_expressions,
-                            &struct_per_file,
-                            mutation_count,
-                        ));
+                        if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
+                            struct_per_file.append(&mut get_splice_parts(&source_code));
+                            println!("testing1");
+                            mutated.append(&mut mutate_splice(
+                                &source_code,
+                                &new_expressions,
+                                &struct_per_file,
+                                mutation_count,
+                            ));
+                        }
                     }
                 }
+                println!("testing2");
                 for (idx, src) in mutated.iter().enumerate() {
                     let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
                     let file_name = format!("mut_{}_{}.rs", file_name, (idx + 1).to_string());
@@ -612,16 +648,22 @@ pub fn main() {
                 // file name을 저장한다.
                 let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
                 if let Some(ext) = path.extension() {
+                    let name = path.file_name().unwrap().to_string_lossy().into_owned();
+                    println!("filename : {}", name);
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
                         let source_code = fs::read_to_string(path).unwrap();
-                        mutated.append(&mut get_struct_crushed_sources(
-                            &source_code,
-                            mutation_mode,
-                            mutation_count,
-                        ));
+                        if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
+                            println!("testing1");
+                            mutated.append(&mut get_struct_crushed_sources(
+                                &source_code,
+                                mutation_mode,
+                                mutation_count,
+                            ));
+                        }
                     }
                 }
+                println!("testing2");
                 for (idx, src) in mutated.iter().enumerate() {
                     let file_name = format!("mut_{}_{}.rs", file_name, (idx + 1).to_string());
                     let file_path = output_dir.join(file_name);
