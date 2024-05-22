@@ -639,11 +639,12 @@ pub fn main() {
                 if let Some(ext) = path.extension() {
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
-                        let source_code = fs::read_to_string(path).unwrap();
-                        if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
-                            // 이거 &source_code 도대체 왜 에러가...
-                            // splice_mutates.append(&mut get_splice_parts(&source_code));
-                            splice_mutates.append(&mut get_splice_parts(&source_code));
+                        if let Some(source_code) = fs::read_to_string(path).unwrap(){
+                            if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
+                                // 이거 &source_code 도대체 왜 에러가...
+                                // splice_mutates.append(&mut get_splice_parts(&source_code));
+                                splice_mutates.append(&mut get_splice_parts(&source_code));
+                            }
                         }
                     }
                 }
@@ -657,22 +658,23 @@ pub fn main() {
                     // 평소 하듯 아래 코드처럼 sample을 만들면 source code 범위 지정 과정에서 index out of bounds 발생
                     // 방법은 2가지다. source code를 TypePosInfo안에 넣어주거나, 아예 이 sample 자체를 외부에서 만들어서 전달하거나.
                     // 당연히 후자를 해야지..?
-                    let source_code = fs::read_to_string(path).unwrap();
+                    if let Some(source_code) = fs::read_to_string(path).unwrap(){
                         if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
-                        // 왜안되는건데 왜
-                        // 넘겨주는 모든 것을 &str이 아닌 String으로 바꿔버렸다.
-                        // HashMap<&str, Vec<String>> 이렇게 바꿨다.
-                        let sample = &source_code[start_byte..end_byte];
-                        if let Some(exprs) = new_expressions.get_mut(type_string) {
-                            if exprs.contains(&sample.to_string()) {
-                                // 이미 있으면 추가하지 않는다. duplicate 방지
-                                continue;
+                            // 왜안되는건데 왜
+                            // 넘겨주는 모든 것을 &str이 아닌 String으로 바꿔버렸다.
+                            // HashMap<&str, Vec<String>> 이렇게 바꿨다.
+                            let sample = &source_code[start_byte..end_byte];
+                            if let Some(exprs) = new_expressions.get_mut(type_string) {
+                                if exprs.contains(&sample.to_string()) {
+                                    // 이미 있으면 추가하지 않는다. duplicate 방지
+                                    continue;
+                                } else {
+                                    exprs.push(sample.to_string());
+                                }
                             } else {
-                                exprs.push(sample.to_string());
+                                new_expressions
+                                    .insert(type_string, vec!["".to_string(), sample.to_string()]);
                             }
-                        } else {
-                            new_expressions
-                                .insert(type_string, vec!["".to_string(), sample.to_string()]);
                         }
                     }
                 }
@@ -694,23 +696,24 @@ pub fn main() {
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
                         // if source_code is larger then 500 lines, ignore it.
-                        let source_code = fs::read_to_string(path).unwrap();
-                        if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
-                            struct_per_file.append(&mut get_splice_parts(&source_code));
-                            if mutation_mode == 3 {
-                                mutated.append(&mut mutate_splice_randtype(
-                                    &source_code,
-                                    &new_expressions,
-                                    &struct_per_file,
-                                    mutation_count,
-                                ));
-                            } else { /* mutation_mode == 2 */
-                                mutated.append(&mut mutate_splice(
-                                    &source_code,
-                                    &new_expressions,
-                                    &struct_per_file,
-                                    mutation_count,
-                                ));
+                        if let Some(source_code) = fs::read_to_string(path).unwrap(){
+                            if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
+                                struct_per_file.append(&mut get_splice_parts(&source_code));
+                                if mutation_mode == 3 {
+                                    mutated.append(&mut mutate_splice_randtype(
+                                        &source_code,
+                                        &new_expressions,
+                                        &struct_per_file,
+                                        mutation_count,
+                                    ));
+                                } else { /* mutation_mode == 2 */
+                                    mutated.append(&mut mutate_splice(
+                                        &source_code,
+                                        &new_expressions,
+                                        &struct_per_file,
+                                        mutation_count,
+                                    ));
+                                }
                             }
                         }
                     }
@@ -743,14 +746,15 @@ pub fn main() {
                     println!("filename : {}", name);
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
-                        let source_code = fs::read_to_string(path).unwrap();
-                        if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
-                            println!("testing1");
-                            mutated.append(&mut get_struct_crushed_sources(
-                                &source_code,
-                                mutation_mode,
-                                mutation_count,
-                            ));
+                        if let Some(source_code) = fs::read_to_string(path).unwrap(){
+                            if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
+                                println!("testing1");
+                                mutated.append(&mut get_struct_crushed_sources(
+                                    &source_code,
+                                    mutation_mode,
+                                    mutation_count,
+                                ));
+                            }
                         }
                     }
                 }
