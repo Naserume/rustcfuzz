@@ -639,7 +639,7 @@ pub fn main() {
                 if let Some(ext) = path.extension() {
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
-                        if let Some(source_code) = fs::read_to_string(path).unwrap(){
+                        if let Some(source_code) = Some(fs::read_to_string(path).unwrap()){
                             if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
                                 // 이거 &source_code 도대체 왜 에러가...
                                 // splice_mutates.append(&mut get_splice_parts(&source_code));
@@ -658,7 +658,7 @@ pub fn main() {
                     // 평소 하듯 아래 코드처럼 sample을 만들면 source code 범위 지정 과정에서 index out of bounds 발생
                     // 방법은 2가지다. source code를 TypePosInfo안에 넣어주거나, 아예 이 sample 자체를 외부에서 만들어서 전달하거나.
                     // 당연히 후자를 해야지..?
-                    if let Some(source_code) = fs::read_to_string(path).unwrap(){
+                    if let Some(source_code) = Some(fs::read_to_string(path).unwrap()){
                         if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
                             // 왜안되는건데 왜
                             // 넘겨주는 모든 것을 &str이 아닌 String으로 바꿔버렸다.
@@ -696,7 +696,7 @@ pub fn main() {
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
                         // if source_code is larger then 500 lines, ignore it.
-                        if let Some(source_code) = fs::read_to_string(path).unwrap(){
+                        if let Some(source_code) = Some(fs::read_to_string(path).unwrap()){
                             if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
                                 struct_per_file.append(&mut get_splice_parts(&source_code));
                                 if mutation_mode == 3 {
@@ -746,7 +746,7 @@ pub fn main() {
                     println!("filename : {}", name);
                     if path.is_file() && ext.to_string_lossy() == "rs" {
                         // dbg!(path);
-                        if let Some(source_code) = fs::read_to_string(path).unwrap(){
+                        if let Some(source_code) = Some(fs::read_to_string(path).unwrap()){
                             if source_code.lines().count() < 500 { // 너무 큰 파일 안씀
                                 println!("testing1");
                                 mutated.append(&mut get_struct_crushed_sources(
